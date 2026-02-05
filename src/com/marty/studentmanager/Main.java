@@ -1,157 +1,109 @@
 package com.marty.studentmanager;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Scanner;
 
 public class Main {
 
-    private final static Scanner input = new Scanner(System.in);
+    private static final Scanner input = new Scanner(System.in);
 
-    public static void main (String[] args){
-
+    public static void main(String[] args) {
         StudentManager studentManager = new StudentManager();
 
-        while(true){
+        while (true) {
             printMenu();
-            int choice = readMenuChoice();
+            int choice = readIntInRange("Select an option: ", 0, 5);
 
-            if(choice == 0){
+            if (choice == 0) {
                 System.out.println("Shutting down...");
                 break;
             }
 
-            try{
-                switch(choice){
-                    case 1 -> {
-                        System.out.println("------------------");
-                        System.out.println("Add a student");
-                        System.out.println("------------------");
-
-                        System.out.print("Enter student name: ");
-                        String name = input.nextLine().trim();
-
-                        if(name.isEmpty()){
-                            System.out.println("Name cannot be empty");
-                            break;
-                        }
-
-                        int grade;
-                        try{
-                            System.out.print("Enter student grade: ");
-                            grade = Integer.parseInt(input.nextLine());
-
-                            if(grade < 0 || grade > 100){
-                                System.out.println("Grade must be between 0 and 100.");
-                                break;
-                            }
-
-                        }catch(NumberFormatException e){
-                            System.out.println("Invalid grade. Please input a number.");
-                            break;
-                        }
-
-                        studentManager.addStudent(name, grade);
-                        System.out.println("Student has been added successfully!");
-                    }case 2 -> {
-                        System.out.println("-----------------");
-                        System.out.println("Remove a student");
-                        System.out.println("-----------------");
-
-                        System.out.print("Enter student name: ");
-                        String rName = input.nextLine().trim();
-
-                        if(rName.isEmpty()){
-                            System.out.println("Please enter a name.");
-                            break;
-                        }
-                        boolean checkIfRemoved = studentManager.removeStudent(rName);
-                        if(checkIfRemoved){
-                            System.out.println("Student has been removed.");
-                        }else {
-                            System.out.println("Student does not exist.");
-                        }
-                    }case 3 -> {
-                        System.out.println("--------------------");
-                        System.out.println("Update student grade");
-                        System.out.println("--------------------");
-
-                        System.out.print("Enter student name: ");
-                        String uName = input.nextLine().trim();
-
-                        if(uName.isEmpty()){
-                            System.out.println("Please enter a name.");
-                            break;
-                        }
-
-                        int uGrade;
-                        try{
-                            System.out.print("Enter updated grade: ");
-                            uGrade = Integer.parseInt(input.nextLine());
-                            if(uGrade < 0 || uGrade > 100){
-                                System.out.println("Grade must be between 0 and 100.");
-                            }
-                            boolean checkIfUpdated = studentManager.updateGrade(uName, uGrade);
-                            if(checkIfUpdated){
-                                System.out.println("-----------------------");
-                                System.out.println("Grade has been updated.");
-                                System.out.println("Updated Info:" +
-                                        "\n Name: " + uName +
-                                        "\n Grade: " + uGrade);
-                            }else{
-                                System.out.println("Student does not exist.");
-                            }
-                        }catch(NumberFormatException e){
-                            System.out.println("Invalid grade. Please enter a number.");
-                        }
-
-                    }case 4 -> {
-                        Map <String, Integer> students = studentManager.getAllStudents();
-
-                        if(students.isEmpty()){
-                            System.out.println("No students found.");
-                        }else{
-                            System.out.println("Student List:");
-                            System.out.println("-------------");
-                            for(Map.Entry<String, Integer> entry : students.entrySet()){
-                                System.out.println("Name: " + entry.getKey() + ", Grade: " + entry.getValue());
-                            }
-                        }
-                    }case 5 -> {
-                        System.out.println("--------------------");
-                        System.out.println("Search for a student");
-                        System.out.println("--------------------");
-
-                        System.out.print("Enter student name: ");
-                        String sName = input.nextLine().trim();
-
-                        if(sName.isEmpty()){
-                            System.out.println("Please enter a name.");
-                            break;
-                        }
-
-                        Integer grade = studentManager.getGrade(sName);
-                        if(grade == null) {
-                            System.out.println("Student cannot be found.");
-                        }else{
-                            System.out.println("Student Information");
-                            System.out.println("Name: " + sName);
-                            System.out.println("Grade: " + grade);
-                        }
-                    }
-                }
-
-            }catch(IllegalArgumentException e){
-                System.out.println("System Error: " + e.getMessage());
+            switch (choice) {
+                case 1 -> addStudentFlow(studentManager);
+                case 2 -> removeStudentFlow(studentManager);
+                case 3 -> updateGradeFlow(studentManager);
+                case 4 -> listAllStudentsFlow(studentManager);
+                case 5 -> searchStudentFlow(studentManager);
             }
+
+            pressEnterToContinue();
         }
 
         input.close();
     }
 
-    //Helper methods
+    // --------- Flows (each case becomes a small, readable function) ---------
 
-    private static void printMenu(){
+    private static void addStudentFlow(StudentManager studentManager) {
+        printSection("Add a student");
+        String name = readNonEmptyString("Enter student name: ");
+        int grade = readIntInRange("Enter student grade (0–100): ", 0, 100);
 
-        System.out.println("Student Grade Manager");
+        studentManager.addStudent(name, grade);
+        System.out.println("✅ Student added: " + name + " (" + grade + ")");
+    }
+
+    private static void removeStudentFlow(StudentManager studentManager) {
+        printSection("Remove a student");
+        String name = readNonEmptyString("Enter student name: ");
+
+        boolean removed = studentManager.removeStudent(name);
+        if (removed) {
+            System.out.println("✅ Student removed: " + name);
+        } else {
+            System.out.println("⚠️ Student not found: " + name);
+        }
+    }
+
+    private static void updateGradeFlow(StudentManager studentManager) {
+        printSection("Update student grade");
+        String name = readNonEmptyString("Enter student name: ");
+        int grade = readIntInRange("Enter updated grade (0–100): ", 0, 100);
+
+        boolean updated = studentManager.updateGrade(name, grade);
+        if (updated) {
+            System.out.println("✅ Grade updated: " + name + " → " + grade);
+        } else {
+            System.out.println("⚠️ Student not found: " + name);
+        }
+    }
+
+    private static void listAllStudentsFlow(StudentManager studentManager) {
+        printSection("List all students");
+
+        Map<String, Integer> students = studentManager.getAllStudents();
+        if (students.isEmpty()) {
+            System.out.println("No students found.");
+            return;
+        }
+
+        System.out.println("Student List:");
+        System.out.println("-------------");
+        // Optional: sort by name for nicer output
+        students.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
+                .forEach(e -> System.out.println("Name: " + e.getKey() + ", Grade: " + e.getValue()));
+    }
+
+    private static void searchStudentFlow(StudentManager studentManager) {
+        printSection("Search for a student");
+        String name = readNonEmptyString("Enter student name: ");
+
+        Integer grade = studentManager.getGrade(name);
+        if (grade == null) {
+            System.out.println("⚠️ Student not found: " + name);
+        } else {
+            System.out.println("✅ Student Information");
+            System.out.println("Name : " + name);
+            System.out.println("Grade: " + grade);
+        }
+    }
+
+    // --------- UI Helpers ---------
+
+    private static void printMenu() {
+        System.out.println("\nStudent Grade Manager");
         System.out.println("---------------------");
         System.out.println("""
                 [1] Add student
@@ -159,26 +111,47 @@ public class Main {
                 [3] Update grade
                 [4] List all students
                 [5] Search student
-                [0] Exit""");
+                [0] Exit
+                """);
         System.out.println("---------------------");
     }
 
-    private static int readMenuChoice(){
-        while(true){
-            try{
-                System.out.print("Select an option: ");
-                int choice = Integer.parseInt(input.nextLine());
+    private static void printSection(String title) {
+        System.out.println("\n" + title);
+        System.out.println("-".repeat(title.length()));
+    }
 
-                if(choice < 0 || choice > 5){
-                    System.out.println("Selected option is unavailable. Try again.");
+    private static void pressEnterToContinue() {
+        System.out.print("\nPress Enter to continue...");
+        input.nextLine();
+    }
+
+    // --------- Input Helpers ---------
+
+    private static String readNonEmptyString(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String value = input.nextLine().trim();
+            if (!value.isEmpty()) return value;
+            System.out.println("Invalid input. Please enter a non-empty value.");
+        }
+    }
+
+    private static int readIntInRange(String prompt, int min, int max) {
+        while (true) {
+            System.out.print(prompt);
+            String raw = input.nextLine().trim();
+
+            try {
+                int value = Integer.parseInt(raw);
+                if (value < min || value > max) {
+                    System.out.println("Invalid number. Enter a value between " + min + " and " + max + ".");
                     continue;
                 }
-                return choice;
-            }catch(NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a number.");
+                return value;
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid integer.");
             }
         }
-
-
     }
 }
