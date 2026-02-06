@@ -2,6 +2,7 @@ package com.marty.studentmanager;
 
 import java.util.Map;
 import java.util.Scanner;
+import java.nio.file.Path;
 
 public class Main {
 
@@ -9,6 +10,9 @@ public class Main {
 
     public static void main(String[] args) {
         StudentManager studentManager = new StudentManager();
+        StudentStorage studentStorage = new StudentStorage(Path.of("students.txt"));
+
+        studentManager.loadStudents(studentStorage.load());
 
         while (true) {
             printMenu();
@@ -20,9 +24,9 @@ public class Main {
             }
 
             switch (choice) {
-                case 1 -> addStudentFlow(studentManager);
-                case 2 -> removeStudentFlow(studentManager);
-                case 3 -> updateGradeFlow(studentManager);
+                case 1 -> addStudentFlow(studentManager, studentStorage);
+                case 2 -> removeStudentFlow(studentManager, studentStorage);
+                case 3 -> updateGradeFlow(studentManager, studentStorage);
                 case 4 -> listAllStudentsFlow(studentManager);
                 case 5 -> searchStudentFlow(studentManager);
             }
@@ -35,28 +39,31 @@ public class Main {
 
     // --------- Flows (each case becomes a small, readable function) ---------
 
-    private static void addStudentFlow(StudentManager studentManager) {
+    private static void addStudentFlow(StudentManager studentManager, StudentStorage studentStorage) {
         printSection("Add a student");
         String name = readNonEmptyString("Enter student name: ");
         int grade = readIntInRange("Enter student grade (0–100): ", 0, 100);
 
         studentManager.addStudent(name, grade);
         System.out.println("✅ Student added: " + name + " (" + grade + ")");
+
+        studentStorage.save(studentManager.getAllStudents());
     }
 
-    private static void removeStudentFlow(StudentManager studentManager) {
+    private static void removeStudentFlow(StudentManager studentManager, StudentStorage studentStorage) {
         printSection("Remove a student");
         String name = readNonEmptyString("Enter student name: ");
 
         boolean removed = studentManager.removeStudent(name);
         if (removed) {
             System.out.println("✅ Student removed: " + name);
+            studentStorage.save(studentManager.getAllStudents());
         } else {
             System.out.println("⚠️ Student not found: " + name);
         }
     }
 
-    private static void updateGradeFlow(StudentManager studentManager) {
+    private static void updateGradeFlow(StudentManager studentManager, StudentStorage studentStorage) {
         printSection("Update student grade");
         String name = readNonEmptyString("Enter student name: ");
         int grade = readIntInRange("Enter updated grade (0–100): ", 0, 100);
@@ -64,6 +71,7 @@ public class Main {
         boolean updated = studentManager.updateGrade(name, grade);
         if (updated) {
             System.out.println("✅ Grade updated: " + name + " → " + grade);
+            studentStorage.save(studentManager.getAllStudents());
         } else {
             System.out.println("⚠️ Student not found: " + name);
         }

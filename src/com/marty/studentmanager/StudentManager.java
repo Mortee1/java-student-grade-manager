@@ -1,5 +1,6 @@
 package com.marty.studentmanager;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -28,8 +29,13 @@ public class StudentManager{
         return students.get(name);
     }
 
-    public Map <String, Integer> getAllStudents(){
-        return students;
+    public Map<String, Integer> getAllStudents(){
+        return Collections.unmodifiableMap(students);
+    }
+
+    public void loadStudents(Map<String, Integer> loadedStudents){
+        students.clear();
+        students.putAll(loadedStudents);
     }
 
 }
