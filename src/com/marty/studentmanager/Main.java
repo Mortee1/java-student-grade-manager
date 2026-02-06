@@ -1,19 +1,24 @@
-package com.marty.studentmanager.Main;
+package com.marty.studentmanager;
 
 import com.marty.studentmanager.manager.StudentManager;
 import com.marty.studentmanager.storage.StudentStorage;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Scanner;
-import java.nio.file.Path;
 
 public class Main {
 
     private static final Scanner input = new Scanner(System.in);
 
+    private static final int MIN_GRADE = 0;
+    private static final int MAX_GRADE = 100;
+
+    private static final Path DATA_FILE = Path.of("data", "students.txt");
+
     public static void main(String[] args) {
         StudentManager studentManager = new StudentManager();
-        StudentStorage studentStorage = new StudentStorage(Path.of("students.txt"));
+        StudentStorage studentStorage = new StudentStorage(DATA_FILE);
 
         studentManager.loadStudents(studentStorage.load());
         System.out.println("Loaded " + studentManager.getAllStudents().size() + " students.");
@@ -33,51 +38,62 @@ public class Main {
                 case 3 -> updateGradeFlow(studentManager, studentStorage);
                 case 4 -> listAllStudentsFlow(studentManager);
                 case 5 -> searchStudentFlow(studentManager);
+                default -> System.out.println("Invalid option.");
             }
 
             pressEnterToContinue();
         }
-
-        input.close();
     }
-
-    // --------- Flows (each case becomes a small, readable function) ---------
 
     private static void addStudentFlow(StudentManager studentManager, StudentStorage studentStorage) {
         printSection("Add a student");
+
         String name = readNonEmptyString("Enter student name: ");
-        int grade = readIntInRange("Enter student grade (0–100): ", 0, 100);
+        int grade = readIntInRange("Enter student grade (0–100): ", MIN_GRADE, MAX_GRADE);
 
-        studentManager.addStudent(name, grade);
-        System.out.println("✅ Student added: " + name + " (" + grade + ")");
-
-        studentStorage.save(studentManager.getAllStudents());
+        try {
+            studentManager.addStudent(name, grade);
+            System.out.println("✅ Student saved: " + name.trim() + " (" + grade + ")");
+            studentStorage.save(studentManager.getAllStudents());
+        } catch (IllegalArgumentException e) {
+            System.out.println("⚠️ " + e.getMessage());
+        }
     }
 
     private static void removeStudentFlow(StudentManager studentManager, StudentStorage studentStorage) {
         printSection("Remove a student");
+
         String name = readNonEmptyString("Enter student name: ");
 
-        boolean removed = studentManager.removeStudent(name);
-        if (removed) {
-            System.out.println("✅ Student removed: " + name);
-            studentStorage.save(studentManager.getAllStudents());
-        } else {
-            System.out.println("⚠️ Student not found: " + name);
+        try {
+            boolean removed = studentManager.removeStudent(name);
+            if (removed) {
+                System.out.println("✅ Student removed: " + name.trim());
+                studentStorage.save(studentManager.getAllStudents());
+            } else {
+                System.out.println("⚠️ Student not found: " + name.trim());
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("⚠️ " + e.getMessage());
         }
     }
 
     private static void updateGradeFlow(StudentManager studentManager, StudentStorage studentStorage) {
         printSection("Update student grade");
-        String name = readNonEmptyString("Enter student name: ");
-        int grade = readIntInRange("Enter updated grade (0–100): ", 0, 100);
 
-        boolean updated = studentManager.updateGrade(name, grade);
-        if (updated) {
-            System.out.println("✅ Grade updated: " + name + " → " + grade);
-            studentStorage.save(studentManager.getAllStudents());
-        } else {
-            System.out.println("⚠️ Student not found: " + name);
+        String name = readNonEmptyString("Enter student name: ");
+        int grade = readIntInRange("Enter updated grade (0–100): ", MIN_GRADE, MAX_GRADE);
+
+        try {
+            boolean updated = studentManager.updateGrade(name, grade);
+            if (updated) {
+                System.out.println("✅ Grade updated: " + name.trim() + " → " + grade);
+                studentStorage.save(studentManager.getAllStudents());
+            } else {
+                System.out.println("⚠️ Student not found: " + name.trim());
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("⚠️ " + e.getMessage());
         }
     }
 
@@ -90,9 +106,9 @@ public class Main {
             return;
         }
 
-        System.out.println("Student List:");
-        System.out.println("-------------");
-        // Optional: sort by name for nicer output
+        System.out.println("Student List (" + students.size() + ")");
+        System.out.println("-------------------");
+
         students.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
                 .forEach(e -> System.out.println("Name: " + e.getKey() + ", Grade: " + e.getValue()));
@@ -100,19 +116,22 @@ public class Main {
 
     private static void searchStudentFlow(StudentManager studentManager) {
         printSection("Search for a student");
+
         String name = readNonEmptyString("Enter student name: ");
 
-        Integer grade = studentManager.getGrade(name);
-        if (grade == null) {
-            System.out.println("⚠️ Student not found: " + name);
-        } else {
-            System.out.println("✅ Student Information");
-            System.out.println("Name : " + name);
-            System.out.println("Grade: " + grade);
+        try {
+            Integer grade = studentManager.getGrade(name);
+            if (grade == null) {
+                System.out.println("⚠️ Student not found: " + name.trim());
+            } else {
+                System.out.println("✅ Student Information");
+                System.out.println("Name : " + name.trim());
+                System.out.println("Grade: " + grade);
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("⚠️ " + e.getMessage());
         }
     }
-
-    // --------- UI Helpers ---------
 
     private static void printMenu() {
         System.out.println("\nStudent Grade Manager");
@@ -137,8 +156,6 @@ public class Main {
         System.out.print("\nPress Enter to continue...");
         input.nextLine();
     }
-
-    // --------- Input Helpers ---------
 
     private static String readNonEmptyString(String prompt) {
         while (true) {
