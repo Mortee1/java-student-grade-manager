@@ -1,4 +1,4 @@
-package com.marty.studentmanager;
+package com.marty.studentmanager.storage;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

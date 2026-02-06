@@ -1,4 +1,4 @@
-package com.marty.studentmanager;
+package com.marty.studentmanager.manager;
 
 import java.util.Collections;
 import java.util.Map;

@@ -1,4 +1,7 @@
-package com.marty.studentmanager;
+package com.marty.studentmanager.Main;
+
+import com.marty.studentmanager.manager.StudentManager;
+import com.marty.studentmanager.storage.StudentStorage;
 
 import java.util.Map;
 import java.util.Scanner;
@@ -13,6 +16,7 @@ public class Main {
         StudentStorage studentStorage = new StudentStorage(Path.of("students.txt"));
 
         studentManager.loadStudents(studentStorage.load());
+        System.out.println("Loaded " + studentManager.getAllStudents().size() + " students.");
 
         while (true) {
             printMenu();
